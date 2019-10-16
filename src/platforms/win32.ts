@@ -42,7 +42,7 @@ export default class WindowsPlatform implements Platform {
     // If not, then just use Firefox itself.
     try {
       if (process.env.NSS_CERTUTIL) {
-        if (!/^".*"$/.test(process.env.NSS_CERTUTIL.trim())) process.env.NSS_CERTUTIL = `"${process.env.NSS_CERTUTIL.trim()}"`
+        if (!/^".*"$/.test(process.env.NSS_CERTUTIL.trim())) process.env.NSS_CERTUTIL = `"${process.env.NSS_CERTUTIL.trim()}"`;
         addCertificateToNSSCertDB(this.FIREFOX_NSS_DIR, certificatePath, process.env.NSS_CERTUTIL);
       } else {
         await openCertificateInFirefox('start firefox', certificatePath);
