@@ -2,7 +2,7 @@ import createDebug from 'debug';
 import crypto from 'crypto';
 import { writeFileSync as write, readFileSync as read } from 'fs';
 import { Options } from '../index';
-import { openCertificateInFirefox } from './shared';
+import { openCertificateInFirefox, addCertificateToNSSCertDB } from './shared';
 import { Platform } from '.';
 import { run, sudo } from '../utils';
 import UI from '../user-interface';
@@ -14,6 +14,7 @@ let encryptionKey: string;
 export default class WindowsPlatform implements Platform {
 
   private HOST_FILE_PATH = 'C:\\Windows\\System32\\Drivers\\etc\\hosts';
+  private FIREFOX_NSS_DIR = `${process.env.APPDATA}\\Mozilla\\Firefox\\Profiles\\*`;
 
   /**
    * Windows is at least simple. Like macOS, most applications will delegate to
@@ -36,11 +37,17 @@ export default class WindowsPlatform implements Platform {
       });
     }
     debug('adding devcert root to Firefox trust store')
-    // Firefox (don't even try NSS certutil, no easy install for Windows)
+    // If user has installed nss certutil, and has provided environment variable NSS_CERTUTIL
+    // then use it to install add to Firefox trust store.
+    // If not, then just use Firefox itself.
     try {
-      await openCertificateInFirefox('start firefox', certificatePath);
-    } catch {
-      debug('Error opening Firefox, most likely Firefox is not installed');
+      if (process.env.NSS_CERTUTIL) {
+        addCertificateToNSSCertDB(this.FIREFOX_NSS_DIR, certificatePath, process.env.NSS_CERTUTIL);
+      } else {
+        await openCertificateInFirefox('start firefox', certificatePath);
+      }
+    } catch (err) {
+      debug(`Error occurred while setting up Firefox trust\n${err}`);
     }
   }
 
